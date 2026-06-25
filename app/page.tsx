@@ -12,7 +12,7 @@ const OS = {
   desktop: "#0d0d14",
   taskbar: "rgba(8,8,12,0.95)",
   window: "#111118",
-  windowBorder: "rgba(255,255,255,0.08)",
+  windowBorder: "rgba(255,255,255,0.10)",
   titlebar: "#18181f",
   titlebarActive: "#1e1e2a",
   accent: "#6366f1",       // indigo
@@ -22,9 +22,9 @@ const OS = {
   greenDim: "rgba(34,197,94,0.6)",
   amber: "#f59e0b",
   red: "#ef4444",
-  text: "#e2e8f0",
-  textMuted: "#94a3b8",
-  textDim: "#475569",
+  text: "#f1f5f9",
+  textMuted: "#cbd5e1",
+  textDim: "#64748b",
   folderYellow: "#fbbf24",
 };
 
@@ -192,17 +192,23 @@ function OSWindow({ win, onFocus, onClose, onMinimize, onDrag, children }: Windo
       >
         {/* Traffic lights */}
         <div style={{ display: "flex", gap: 6, marginRight: 8 }} data-no-drag>
-          <button onClick={onClose} style={{
-            width: 12, height: 12, borderRadius: "50%",
-            background: OS.red, border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 8, color: "rgba(0,0,0,0.5)",
-          }}>×</button>
-          <button onClick={onMinimize} style={{
-            width: 12, height: 12, borderRadius: "50%",
-            background: OS.amber, border: "none", cursor: "pointer",
-          }} />
-          <div style={{ width: 12, height: 12, borderRadius: "50%", background: OS.green, opacity: 0.4 }} />
+          <button
+            onClick={e => { e.stopPropagation(); onClose(); }}
+            onMouseDown={e => e.stopPropagation()}
+            style={{
+              width: 13, height: 13, borderRadius: "50%",
+              background: OS.red, border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 9, color: "rgba(0,0,0,0.6)", fontWeight: 700, lineHeight: 1,
+            }}>×</button>
+          <button
+            onClick={e => { e.stopPropagation(); onMinimize(); }}
+            onMouseDown={e => e.stopPropagation()}
+            style={{
+              width: 13, height: 13, borderRadius: "50%",
+              background: OS.amber, border: "none", cursor: "pointer",
+            }} />
+          <div style={{ width: 13, height: 13, borderRadius: "50%", background: OS.green, opacity: 0.35 }} />
         </div>
         <span style={{ fontSize: 12, color: OS.textMuted, fontFamily: "monospace", marginRight: "auto" }}>
           {win.icon} {win.title}
@@ -943,37 +949,50 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Welcome message (fades after windows open) */}
-          {windows.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 0.4 }}
-              style={{
-                position: "fixed", top: "50%", left: "50%",
-                transform: "translate(-50%, -50%)",
-                textAlign: "center", zIndex: 10, pointerEvents: "none",
-              }}
-            >
-              <div style={{ fontSize: 11, color: OS.textDim, fontFamily: "monospace", letterSpacing: 2, marginBottom: 12 }}>
-                ROBIN OS — BUILD 2025
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: OS.text, marginBottom: 8 }}>
-                Welcome, Recruiter
-              </div>
-              <div style={{ fontSize: 14, color: OS.textMuted, marginBottom: 20 }}>
-                Double-click any icon to explore · Open terminal · Type <code style={{ color: OS.accent, background: "rgba(99,102,241,0.1)", padding: "2px 6px", borderRadius: 4 }}>hire robin</code>
-              </div>
+          {/* Welcome message (only when no windows open) */}
+          <AnimatePresence>
+            {windows.length === 0 && (
               <motion.div
-                animate={{ opacity: [0.4, 1, 0.4] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                style={{ fontSize: 11, color: OS.textDim, fontFamily: "monospace" }}
+                key="welcome"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                style={{
+                  position: "fixed",
+                  top: "50%",
+                  left: "calc(50% + 88px)",
+                  transform: "translate(-50%, -50%)",
+                  textAlign: "center",
+                  zIndex: 10,
+                  pointerEvents: "none",
+                  width: 480,
+                }}
               >
-                ↖ double-click icons to open
+                <div style={{ fontSize: 11, color: OS.textDim, fontFamily: "monospace", letterSpacing: 3, marginBottom: 14 }}>
+                  ROBIN OS — BUILD 2025
+                </div>
+                <div style={{ fontSize: 36, fontWeight: 800, color: OS.text, marginBottom: 10, lineHeight: 1.1 }}>
+                  Welcome, Recruiter
+                </div>
+                <div style={{ fontSize: 15, color: OS.textMuted, marginBottom: 28, lineHeight: 1.6 }}>
+                  You're looking at Robin Devkota's portfolio.<br />
+                  <span style={{ color: OS.text }}>Double-click any file</span> on the left to explore.
+                </div>
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ repeat: Infinity, duration: 2.2 }}
+                  style={{
+                    fontSize: 12, color: OS.textDim, fontFamily: "monospace",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  }}
+                >
+                  <span>←</span>
+                  <span>double-click any icon to open</span>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          )}
+            )}
+          </AnimatePresence>
 
           {/* Windows */}
           <AnimatePresence>
