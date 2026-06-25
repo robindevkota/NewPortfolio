@@ -191,24 +191,29 @@ function OSWindow({ win, onFocus, onClose, onMinimize, onDrag, children }: Windo
         }}
       >
         {/* Traffic lights */}
-        <div style={{ display: "flex", gap: 6, marginRight: 8 }} data-no-drag>
+        <div style={{ display: "flex", gap: 8, marginRight: 8 }} data-no-drag>
           <button
             onClick={e => { e.stopPropagation(); onClose(); }}
             onMouseDown={e => e.stopPropagation()}
+            title="Close"
             style={{
-              width: 13, height: 13, borderRadius: "50%",
-              background: OS.red, border: "none", cursor: "pointer",
+              width: 20, height: 20, borderRadius: "50%",
+              background: "#ef4444",
+              border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 9, color: "rgba(0,0,0,0.6)", fontWeight: 700, lineHeight: 1,
+              fontSize: 13, color: "#7f0000", fontWeight: 900, lineHeight: 1,
+              flexShrink: 0,
             }}>×</button>
           <button
             onClick={e => { e.stopPropagation(); onMinimize(); }}
             onMouseDown={e => e.stopPropagation()}
+            title="Minimize"
             style={{
-              width: 13, height: 13, borderRadius: "50%",
-              background: OS.amber, border: "none", cursor: "pointer",
+              width: 20, height: 20, borderRadius: "50%",
+              background: "#f59e0b",
+              border: "none", cursor: "pointer", flexShrink: 0,
             }} />
-          <div style={{ width: 13, height: 13, borderRadius: "50%", background: OS.green, opacity: 0.35 }} />
+          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#22c55e", opacity: 0.3, flexShrink: 0 }} />
         </div>
         <span style={{ fontSize: 12, color: OS.textMuted, fontFamily: "monospace", marginRight: "auto" }}>
           {win.icon} {win.title}
@@ -299,19 +304,19 @@ function ProjectsContent({ onOpenProject }: { onOpenProject: (id: string) => voi
                 {p.id === "royal-suites" ? "🏨" : p.id === "agentinbox" ? "🤖" : "🌐"}
               </span>
               <span style={{ fontSize: 14, fontWeight: 600, color: OS.text }}>{p.name}</span>
-              <span style={{ fontSize: 10, color: OS.accent, background: OS.accentGlow, padding: "2px 8px", borderRadius: 4 }}>
+              <span style={{ fontSize: 11, color: "#a5b4fc", background: "rgba(99,102,241,0.18)", padding: "3px 9px", borderRadius: 4, fontWeight: 500 }}>
                 {p.tag}
               </span>
-              <span style={{ marginLeft: "auto", fontSize: 11, color: OS.textDim }}>→ open</span>
+              <span style={{ marginLeft: "auto", fontSize: 12, color: OS.accent, fontWeight: 600 }}>→ open</span>
             </div>
             <div style={{ fontSize: 12, color: OS.textMuted, lineHeight: 1.6 }}>{p.description}</div>
             <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
               {p.stack.slice(0, 4).map(t => (
-                <span key={t} style={{ fontSize: 10, color: OS.textDim, background: "rgba(255,255,255,0.04)", padding: "2px 7px", borderRadius: 4 }}>
+                <span key={t} style={{ fontSize: 11, color: "#94a3b8", background: "rgba(255,255,255,0.07)", padding: "3px 8px", borderRadius: 4 }}>
                   {t}
                 </span>
               ))}
-              {p.stack.length > 4 && <span style={{ fontSize: 10, color: OS.textDim }}>+{p.stack.length - 4}</span>}
+              {p.stack.length > 4 && <span style={{ fontSize: 11, color: "#94a3b8" }}>+{p.stack.length - 4}</span>}
             </div>
           </motion.div>
         ))}
@@ -961,29 +966,32 @@ export default function Home() {
                 style={{
                   position: "fixed",
                   top: "50%",
-                  left: "calc(50% + 88px)",
-                  transform: "translate(-50%, -50%)",
+                  left: 176,
+                  right: 0,
+                  transform: "translateY(-50%)",
                   textAlign: "center",
                   zIndex: 10,
                   pointerEvents: "none",
-                  width: 480,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
-                <div style={{ fontSize: 11, color: OS.textDim, fontFamily: "monospace", letterSpacing: 3, marginBottom: 14 }}>
+                <div style={{ fontSize: 12, color: "#94a3b8", fontFamily: "monospace", letterSpacing: 3, marginBottom: 14 }}>
                   ROBIN OS — BUILD 2025
                 </div>
-                <div style={{ fontSize: 36, fontWeight: 800, color: OS.text, marginBottom: 10, lineHeight: 1.1 }}>
+                <div style={{ fontSize: 36, fontWeight: 800, color: "#ffffff", marginBottom: 10, lineHeight: 1.1 }}>
                   Welcome, Recruiter
                 </div>
-                <div style={{ fontSize: 15, color: OS.textMuted, marginBottom: 28, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 15, color: "#cbd5e1", marginBottom: 28, lineHeight: 1.6 }}>
                   You're looking at Robin Devkota's portfolio.<br />
-                  <span style={{ color: OS.text }}>Double-click any file</span> on the left to explore.
+                  <span style={{ color: "#ffffff", fontWeight: 600 }}>Double-click any file</span> on the left to explore.
                 </div>
                 <motion.div
                   animate={{ opacity: [0.5, 1, 0.5] }}
                   transition={{ repeat: Infinity, duration: 2.2 }}
                   style={{
-                    fontSize: 12, color: OS.textDim, fontFamily: "monospace",
+                    fontSize: 12, color: "#64748b", fontFamily: "monospace",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   }}
                 >
