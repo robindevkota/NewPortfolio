@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { projects } from "@/data/projects";
 import { skillGroups } from "@/data/skills";
 import { experiences } from "@/data/experience";
+import dynamic from "next/dynamic";
+
+const FloatingSpace = dynamic(() => import("@/components/ui/FloatingSpace"), { ssr: false });
 
 // ─── OS Theme ────────────────────────────────────────────────────────────────
 const OS = {
@@ -93,7 +96,7 @@ function BootScreen({ onDone }: { onDone: () => void }) {
       <div style={{ marginBottom: 40, textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 8 }}>⬛</div>
         <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: 6, color: "#fff" }}>ROBIN OS</div>
-        <div style={{ fontSize: 11, color: OS.textDim, letterSpacing: 3, marginTop: 4 }}>Full Stack · AI Orchestrator</div>
+        <div style={{ fontSize: 11, color: OS.green, opacity: 0.85, letterSpacing: 3, marginTop: 4 }}>Full Stack · AI Orchestrator</div>
       </div>
 
       <div style={{ width: 380, marginBottom: 24 }}>
@@ -101,9 +104,9 @@ function BootScreen({ onDone }: { onDone: () => void }) {
           <motion.div key={i}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            style={{ fontSize: 12, marginBottom: 5, color: i === step ? OS.green : OS.textDim }}
+            style={{ fontSize: 12, marginBottom: 5, color: OS.green }}
           >
-            <span style={{ color: OS.accentDim, marginRight: 8 }}>{i < step ? "✓" : "▶"}</span>
+            <span style={{ color: i === step ? OS.amber : OS.green, marginRight: 8 }}>{i < step ? "✓" : "▶"}</span>
             {l}
           </motion.div>
         ))}
@@ -116,7 +119,7 @@ function BootScreen({ onDone }: { onDone: () => void }) {
           transition={{ duration: 0.3 }}
         />
       </div>
-      <div style={{ marginTop: 8, fontSize: 11, color: OS.textDim }}>{Math.round(progress)}%</div>
+      <div style={{ marginTop: 8, fontSize: 11, color: OS.green }}>{Math.round(progress)}%</div>
     </div>
   );
 }
@@ -698,7 +701,17 @@ function Taskbar({
   );
 }
 
-// ─── Wallpaper ────────────────────────────────────────────────────────────────
+// ─── Wallpaper (Interactive Shockwave Kinetic Grid) ───────────────────────────
+interface Ripple {
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  speed: number;
+  strength: number;
+  decay: number;
+}
+
 function Wallpaper() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -708,90 +721,356 @@ function Wallpaper() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      draw();
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
     };
 
+    // Mouse coordinates with easing (lerp)
+    const mouse = {
+      x: -1000,
+      y: -1000,
+      targetX: -1000,
+      targetY: -1000,
+      active: false,
+    };
+
+    // List of active shockwave ripples
+    let ripples: Ripple[] = [];
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
+      mouse.active = true;
+    };
+
+    const handleMouseLeave = () => {
+      mouse.targetX = -1000;
+      mouse.targetY = -1000;
+      mouse.active = false;
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      // Spawn a new shockwave ripple at click location
+      ripples.push({
+        x: e.clientX,
+        y: e.clientY,
+        radius: 0,
+        maxRadius: Math.max(width, height) * 0.9,
+        speed: 10, // Pixels per frame
+        strength: 45, // Max push in pixels
+        decay: 0.95, // Decay factor
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    window.addEventListener("mouseleave", handleMouseLeave, { passive: true });
+    window.addEventListener("mousedown", handleMouseDown, { passive: true });
+    window.addEventListener("resize", resize, { passive: true });
+    resize();
+
+    // Configuration
+    const gs = 55; // Grid spacing
+    const maxDist = 220; // Magnetic warp radius
+    const maxPush = 28; // Maximum warp push in pixels
+
+    // Helper to calculate cursor & shockwave warped coordinate
+    const getWarpedPoint = (origX: number, origY: number) => {
+      let drawX = origX;
+      let drawY = origY;
+
+      // 1. Mouse Gravity Warp
+      if (mouse.x > 0) {
+        const dx = origX - mouse.x;
+        const dy = origY - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < maxDist) {
+          const force = (maxDist - dist) / maxDist; // 0 to 1
+          const easeForce = Math.sin(force * Math.PI / 2);
+          const push = easeForce * maxPush;
+          const angle = Math.atan2(dy, dx);
+          drawX += Math.cos(angle) * push;
+          drawY += Math.sin(angle) * push;
+        }
+      }
+
+      // 2. Click Shockwave Warp (accumulated)
+      ripples.forEach(r => {
+        const dx = origX - r.x;
+        const dy = origY - r.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const w = 70; // Shockwave thickness
+        const diff = Math.abs(dist - r.radius);
+
+        if (diff < w) {
+          const force = (1 - diff / w) * (r.strength / 45); // 0 to 1 scaling
+          const push = force * r.strength;
+          const angle = Math.atan2(dy, dx);
+          drawX += Math.cos(angle) * push;
+          drawY += Math.sin(angle) * push;
+        }
+      });
+
+      return { x: drawX, y: drawY };
+    };
+
+    // Subtle drifting nodes
     const particles: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
-    for (let i = 0; i < 80; i++) {
+    const particleCount = 35;
+    for (let i = 0; i < particleCount; i++) {
       particles.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        r: Math.random() * 1.5 + 0.3,
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        r: Math.random() * 1.2 + 0.4,
       });
     }
 
     let raf: number;
-    function draw() {
+
+    const draw = () => {
       if (!canvas || !ctx) return;
+
+      // Clear with background color
       ctx.fillStyle = OS.bg;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, width, height);
 
-      // Grid lines
-      ctx.strokeStyle = "rgba(99,102,241,0.04)";
+      // Lerp mouse coordinates to create smooth inertia
+      if (mouse.active) {
+        if (mouse.x === -1000) {
+          mouse.x = mouse.targetX;
+          mouse.y = mouse.targetY;
+        } else {
+          mouse.x += (mouse.targetX - mouse.x) * 0.08;
+          mouse.y += (mouse.targetY - mouse.y) * 0.08;
+        }
+      } else {
+        mouse.x += (-1000 - mouse.x) * 0.08;
+        mouse.y += (-1000 - mouse.y) * 0.08;
+      }
+
+      // Update shockwave ripples
+      ripples.forEach(r => {
+        r.radius += r.speed;
+        r.strength *= r.decay;
+      });
+      // Filter out dead ripples
+      ripples = ripples.filter(r => r.radius < r.maxRadius && r.strength > 0.3);
+
+      const cols = Math.ceil(width / gs) + 1;
+      const rows = Math.ceil(height / gs) + 1;
+
+      // ─── 1. DRAW WARPED GRID LINES ───
+      ctx.beginPath();
+      // Horizontal lines
+      for (let r = 0; r < rows; r++) {
+        const origY = r * gs;
+        for (let c = 0; c < cols; c++) {
+          const origX = c * gs;
+          const p = getWarpedPoint(origX, origY);
+          if (c === 0) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
+        }
+      }
+      // Vertical lines
+      for (let c = 0; c < cols; c++) {
+        const origX = c * gs;
+        for (let r = 0; r < rows; r++) {
+          const origY = r * gs;
+          const p = getWarpedPoint(origX, origY);
+          if (r === 0) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
+        }
+      }
+      // Base tech grid stroke
+      ctx.strokeStyle = "rgba(99, 102, 241, 0.035)";
       ctx.lineWidth = 1;
-      const gs = 60;
-      for (let x = 0; x < canvas.width; x += gs) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-      }
-      for (let y = 0; y < canvas.height; y += gs) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      ctx.stroke();
+
+      // Dynamic color-shifting cursor glow (cycles hue slightly over time)
+      const dynamicHue = (Date.now() / 120) % 360;
+
+      // Glowing cursor-reactive highlight pass
+      if (mouse.x > 0) {
+        const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, maxDist);
+        grad.addColorStop(0, `hsla(${dynamicHue}, 85%, 65%, 0.24)`);
+        grad.addColorStop(0.5, `hsla(${dynamicHue}, 85%, 65%, 0.07)`);
+        grad.addColorStop(1, "rgba(99, 102, 241, 0)");
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.25;
+        ctx.stroke();
       }
 
-      // Particles
-      particles.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
+      // Glowing click shockwaves (cyan/aqua wavefront pulse)
+      ripples.forEach(r => {
+        const innerR = Math.max(0, r.radius - 45);
+        const outerR = r.radius + 45;
+        const grad = ctx.createRadialGradient(r.x, r.y, innerR, r.x, r.y, outerR);
+        
+        const alpha = Math.max(0, (r.strength / 45) * 0.45);
+        grad.addColorStop(0, "rgba(6, 182, 212, 0)");
+        grad.addColorStop(0.5, `rgba(6, 182, 212, ${alpha})`);
+        grad.addColorStop(1, "rgba(6, 182, 212, 0)");
 
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      });
+
+      // ─── 2. DRAW INTERSECTION DOTS ───
+      // Small default dots
+      ctx.beginPath();
+      for (let r = 0; r < rows; r++) {
+        const origY = r * gs;
+        for (let c = 0; c < cols; c++) {
+          const p = getWarpedPoint(c * gs, origY);
+          ctx.moveTo(p.x + 0.8, p.y);
+          ctx.arc(p.x, p.y, 0.8, 0, Math.PI * 2);
+        }
+      }
+      ctx.fillStyle = "rgba(99, 102, 241, 0.12)";
+      ctx.fill();
+
+      // Bright highlighted dots near cursor
+      if (mouse.x > 0) {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(99,102,241,0.4)";
+        for (let r = 0; r < rows; r++) {
+          const origY = r * gs;
+          for (let c = 0; c < cols; c++) {
+            const origX = c * gs;
+            const dx = origX - mouse.x;
+            const dy = origY - mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < maxDist) {
+              const p = getWarpedPoint(origX, origY);
+              const factor = (maxDist - dist) / maxDist;
+              const rSize = 0.8 + factor * 1.3;
+              ctx.moveTo(p.x + rSize, p.y);
+              ctx.arc(p.x, p.y, rSize, 0, Math.PI * 2);
+            }
+          }
+        }
+        ctx.fillStyle = `hsla(${dynamicHue}, 85%, 65%, 0.45)`;
+        ctx.fill();
+      }
+
+      // Highlighted shockwave dots (glowing cyan dots along wavefronts)
+      ripples.forEach(r => {
+        ctx.beginPath();
+        for (let row = 0; row < rows; row++) {
+          const origY = row * gs;
+          for (let col = 0; col < cols; col++) {
+            const origX = col * gs;
+            const dx = origX - r.x;
+            const dy = origY - r.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const w = 70;
+            const diff = Math.abs(dist - r.radius);
+            
+            if (diff < w) {
+              const p = getWarpedPoint(origX, origY);
+              const factor = (1 - diff / w) * (r.strength / 45);
+              const rSize = 0.8 + factor * 1.5;
+              ctx.moveTo(p.x + rSize, p.y);
+              ctx.arc(p.x, p.y, rSize, 0, Math.PI * 2);
+            }
+          }
+        }
+        ctx.fillStyle = `rgba(6, 182, 212, ${Math.max(0, (r.strength / 45) * 0.7)})`;
         ctx.fill();
       });
 
-      // Connections
-      ctx.strokeStyle = "rgba(99,102,241,0.06)";
-      ctx.lineWidth = 0.5;
+      // ─── 3. DRIFTING PARTICLES ───
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Wrap edges
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        // Add magnetic warping (cursor + ripples) to drifting particles
+        let drawX = p.x;
+        let drawY = p.y;
+        
+        // Mouse warp
+        if (mouse.x > 0) {
+          const dx = p.x - mouse.x;
+          const dy = p.y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < maxDist) {
+            const force = (maxDist - dist) / maxDist;
+            const push = force * (maxPush * 0.7);
+            const angle = Math.atan2(dy, dx);
+            drawX += Math.cos(angle) * push;
+            drawY += Math.sin(angle) * push;
+          }
+        }
+        // Ripples warp
+        ripples.forEach(r => {
+          const dx = p.x - r.x;
+          const dy = p.y - r.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const w = 70;
+          const diff = Math.abs(dist - r.radius);
+          if (diff < w) {
+            const force = (1 - diff / w) * (r.strength / 45);
+            const push = force * (r.strength * 0.7);
+            const angle = Math.atan2(dy, dx);
+            drawX += Math.cos(angle) * push;
+            drawY += Math.sin(angle) * push;
+          }
+        });
+
+        ctx.beginPath();
+        ctx.arc(drawX, drawY, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(99, 102, 241, 0.25)";
+        ctx.fill();
+      });
+
+      // Connections between close particles
+      ctx.beginPath();
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 130) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
+          if (dist < 110) {
+            const pi = getWarpedPoint(particles[i].x, particles[i].y);
+            const pj = getWarpedPoint(particles[j].x, particles[j].y);
+            ctx.moveTo(pi.x, pi.y);
+            ctx.lineTo(pj.x, pj.y);
           }
         }
       }
-
-      // Center glow
-      const grad = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, 0,
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.5
-      );
-      grad.addColorStop(0, "rgba(99,102,241,0.06)");
-      grad.addColorStop(1, "transparent");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "rgba(99, 102, 241, 0.04)";
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
 
       raf = requestAnimationFrame(draw);
-    }
+    };
 
-    resize();
-    window.addEventListener("resize", resize);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseleave", handleMouseLeave);
+      window.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("resize", resize);
+    };
   }, []);
 
-  return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0 }} />;
+  return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
 }
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
@@ -921,6 +1200,7 @@ export default function Home() {
       {booted && (
         <>
           <Wallpaper />
+          <FloatingSpace />
 
           {/* Desktop icons */}
           <div style={{
@@ -952,6 +1232,35 @@ export default function Home() {
                 <span style={{ fontSize: 11, color: OS.text, fontFamily: "monospace" }}>{icon.label}</span>
               </motion.button>
             ))}
+
+            {/* Download CV — sidebar button after contact */}
+            <motion.a
+              href="/Robin_Devkota_CV.pdf"
+              download="Robin_Devkota_CV.pdf"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: DESKTOP_ICONS.length * 0.06 + 0.08 }}
+              style={{
+                background: "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(129,140,248,0.08))",
+                border: "1px solid rgba(99,102,241,0.45)",
+                borderRadius: 8, padding: "8px 12px",
+                cursor: "pointer", display: "flex",
+                alignItems: "center", gap: 8, width: 160,
+                backdropFilter: "blur(8px)",
+                transition: "all 0.15s",
+                textDecoration: "none",
+                boxShadow: "0 0 10px rgba(99,102,241,0.12)",
+                marginTop: 4,
+              }}
+              whileHover={{
+                background: "rgba(99,102,241,0.28)",
+                borderColor: "rgba(99,102,241,0.8)",
+                boxShadow: "0 0 18px rgba(99,102,241,0.35)",
+              }}
+            >
+              <span style={{ fontSize: 16 }}>📄</span>
+              <span style={{ fontSize: 11, color: "#a5b4fc", fontFamily: "monospace", fontWeight: 700 }}>resume.pdf</span>
+            </motion.a>
           </div>
 
           {/* Welcome message (only when no windows open) */}
