@@ -45,10 +45,44 @@ export const projects: Project[] = [
     ],
   },
   {
+    id: "helosarkar",
+    name: "HeloSarkar",
+    tag: "Civic Tech / Government Portal",
+    url: "https://hellosarkar.robindevkota.com",
+    description:
+      "Unified digital grievance portal for citizens to file complaints routed to the correct ministry or ward — Government of Nepal.",
+    longDescription:
+      "Citizens file complaints with geo-cascade selection (province → district → municipality) and track status in real-time. Role-based dashboards for ward admins, ministry admins, and super admins. Built-in accessibility features including dark mode, Nepali language, adjustable text size, and dyslexia font.",
+    stack: ["Next.js 14", "Express", "MongoDB", "JWT", "RBAC", "TypeScript", "Playwright"],
+    highlights: [
+      "5-role RBAC system",
+      "Geo-cascade complaint routing",
+      "Nepali language & accessibility",
+      "Public transparency dashboard",
+    ],
+  },
+  {
+    id: "waiterless",
+    name: "Waiterless",
+    tag: "Multi-Tenant SaaS / Restaurant",
+    url: "https://waiterless.robindevkota.com",
+    description:
+      "Multi-tenant SaaS platform for QR-code-driven table ordering — customers scan, order, and pay with no waiter needed.",
+    longDescription:
+      "Customers scan a QR code per table, browse the menu, place orders, and pay — entirely without a waiter. Real-time Kitchen Display System via Socket.io shows orders instantly. Supports multiple restaurants under one platform with per-restaurant branding, subscription management, and role-based portals.",
+    stack: ["Next.js 14", "Express", "MongoDB", "Socket.io", "Zustand", "Tailwind CSS", "Turborepo", "JWT"],
+    highlights: [
+      "5-role RBAC system",
+      "Real-time KDS via Socket.io",
+      "Multi-tenant with restaurant isolation",
+      "QR-based guest ordering (no login)",
+    ],
+  },
+  {
     id: "newweb",
     name: "NewWeb",
     tag: "No-Code Website & App Factory",
-    url: "https://saucycreation.com",
+    url: "https://webfactory.robindevkota.com",
     description:
       "No-code platform generating full websites and native mobile apps from a single configuration.",
     longDescription:
