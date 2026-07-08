@@ -8,6 +8,7 @@ import { experiences } from "@/data/experience";
 import dynamic from "next/dynamic";
 
 const FloatingSpace = dynamic(() => import("@/components/ui/FloatingSpace"), { ssr: false });
+const BugBounty = dynamic(() => import("@/components/ui/BugBounty"), { ssr: false });
 
 // ─── OS Theme ────────────────────────────────────────────────────────────────
 const OS = {
@@ -1200,7 +1201,8 @@ export default function Home() {
       {booted && (
         <>
           <Wallpaper />
-          <FloatingSpace />
+          <FloatingSpace onProjectOpen={handleOpenProject} />
+          <BugBounty />
 
           {/* Desktop icons */}
           <div style={{
